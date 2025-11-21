@@ -1,0 +1,17 @@
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* Hide Leaflet attribution */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Hide default Leaflet zoom controls on mobile */
+@media (max-width: 768px) {
+  .leaflet-control-zoom {
+    display: none !important;
+  }
+}
+

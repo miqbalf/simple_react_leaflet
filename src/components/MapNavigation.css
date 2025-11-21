@@ -1,0 +1,118 @@
+.map-nav-container {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+}
+
+.map-nav-content {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.map-zoom-controls {
+  display: none; /* Hide on desktop, show only on mobile */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0px;
+  width: 24px;
+  height: 48px;
+  filter: drop-shadow(0px 2px 6px rgba(0, 0, 0, 0.15));
+  border-radius: 4px;
+}
+
+.zoom-button {
+  box-sizing: border-box;
+  width: 24px;
+  height: 24px;
+  background: #FFFFFF;
+  border: 1px solid #BDBDBD;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.zoom-in {
+  border-width: 1px 1px 0.2px 1px;
+  border-radius: 4px 4px 0px 0px;
+}
+
+.zoom-out {
+  border-width: 0.2px 1px 1px 1px;
+  border-radius: 0px 0px 4px 4px;
+}
+
+.map-help-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(2px);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.map-help-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.map-help-text {
+  font-family: 'Roboto', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 18px;
+  color: #000000;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .map-nav-container {
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-width: none;
+    margin: 0;
+  }
+
+  .map-nav-content {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .map-zoom-controls {
+    display: flex; /* Show on mobile */
+    width: 24px;
+    height: 48px;
+    order: 0;
+    align-self: flex-end;
+  }
+
+  .map-help-container {
+    width: 100%;
+    order: 1;
+    max-width: none;
+  }
+
+  .map-help-text {
+    font-size: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
