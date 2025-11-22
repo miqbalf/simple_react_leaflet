@@ -1,46 +1,39 @@
 import React from 'react'
+import { orderedLayerConfig } from '../config/layers'
 import './Legend.css'
 
 function Legend({ layers, onToggleLayer }) {
+  // Filter out hidden layers and layers without server URLs
+  const visibleLayers = orderedLayerConfig.filter(
+    layer => !layer.hidden && layer.serverUrl
+  )
+
   return (
     <div className="legend-container">
-      <div className="legend-item-wrapper">
-        <div className="legend-item">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={layers.kba}
-              onChange={() => onToggleLayer('kba')}
-              className="checkbox-input"
-            />
-            <span className="checkbox-custom"></span>
-            <div className="legend-item-content">
-              <span className="legend-text">Partially and Fully Uncovered KBA of PA</span>
-              <div className="color-box" style={{ backgroundColor: '#005CAF' }}></div>
-            </div>
-          </label>
+      {visibleLayers.map((layerConfig) => (
+        <div key={layerConfig.key} className="legend-item-wrapper">
+          <div className="legend-item">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                checked={layers[layerConfig.key] !== false}
+                onChange={() => onToggleLayer(layerConfig.key)}
+                className="checkbox-input"
+              />
+              <span className="checkbox-custom"></span>
+              <div className="legend-item-content">
+                <span className="legend-text">{layerConfig.label}</span>
+                <div 
+                  className="color-box" 
+                  style={{ backgroundColor: layerConfig.color }}
+                ></div>
+              </div>
+            </label>
+          </div>
         </div>
-      </div>
-      <div className="legend-item-wrapper">
-        <div className="legend-item">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={layers.pa}
-              onChange={() => onToggleLayer('pa')}
-              className="checkbox-input"
-            />
-            <span className="checkbox-custom"></span>
-            <div className="legend-item-content">
-              <span className="legend-text">Key Biodiversity Area (KBA)</span>
-              <div className="color-box" style={{ backgroundColor: '#FFA000' }}></div>
-            </div>
-          </label>
-        </div>
-      </div>
+      ))}
     </div>
   )
 }
 
 export default Legend
-

@@ -4,7 +4,7 @@ import { useMap } from 'react-leaflet'
 import L from 'leaflet'
 import MapNavigation from './MapNavigation'
 import BasemapLayer from './BasemapLayer'
-import layerConfig from '../config/layers'
+import { orderedLayerConfig } from '../config/layers'
 import { getRandomContinentCentroid } from '../utils/continentCentroids'
 import './MapComponent.css'
 
@@ -17,7 +17,8 @@ L.Icon.Default.mergeOptions({
 })
 
 // Component to add MapServer as tile layer (same as basemap)
-function MapServerLayer({ serverUrl, apiKey, visible }) {
+// zIndex ensures layers are rendered in the correct order (higher zIndex = on top)
+function MapServerLayer({ serverUrl, apiKey, visible, zIndex, maxZoom }) {
   const map = useMap()
 
   useEffect(() => {
@@ -44,9 +45,12 @@ function MapServerLayer({ serverUrl, apiKey, visible }) {
     const apiKeyParam = apiKey ? `?token=${apiKey}` : ''
     
     // Create tile layer (same approach as BasemapLayer)
+    // zIndex: higher order = higher zIndex (appears on top)
+    // First layer (order 0) should be at bottom, last layer should be on top
     const layer = L.tileLayer(`${tileUrl}${apiKeyParam}`, {
       attribution: '',
-      maxZoom: 19,
+      maxZoom: maxZoom || 19, // Use configured maxZoom or default to 19
+      zIndex: zIndex || 100, // Default zIndex, higher = on top
     })
 
     layer.addTo(map)
@@ -56,7 +60,95 @@ function MapServerLayer({ serverUrl, apiKey, visible }) {
         map.removeLayer(layer)
       }
     }
-  }, [map, serverUrl, apiKey, visible])
+      }, [map, serverUrl, apiKey, visible, zIndex, maxZoom])
+
+  return null
+}
+
+// Component to enforce zoom limits - runs when map is ready
+function ZoomLimiter({ minZoom, maxZoom }) {
+  const map = useMap()
+
+  useEffect(() => {
+    // Set limits on the map instance immediately
+    map.setMinZoom(minZoom)
+    map.setMaxZoom(maxZoom)
+    
+    // Override zoom methods to enforce limits
+    const originalZoomIn = map.zoomIn.bind(map)
+    const originalZoomOut = map.zoomOut.bind(map)
+    const originalSetZoom = map.setZoom.bind(map)
+    
+    map.zoomIn = function(zoom, options) {
+      const currentZoom = this.getZoom()
+      if (currentZoom >= maxZoom) return this
+      const targetZoom = zoom ? currentZoom + zoom : currentZoom + 1
+      return originalSetZoom(Math.min(maxZoom, targetZoom), options)
+    }
+    
+    map.zoomOut = function(zoom, options) {
+      const currentZoom = this.getZoom()
+      if (currentZoom <= minZoom) return this
+      const targetZoom = zoom ? currentZoom - zoom : currentZoom - 1
+      return originalSetZoom(Math.max(minZoom, targetZoom), options)
+    }
+    
+    map.setZoom = function(zoom, options) {
+      const clampedZoom = Math.max(minZoom, Math.min(maxZoom, zoom))
+      return originalSetZoom(clampedZoom, options)
+    }
+    
+    // Handle mouse wheel zoom manually
+    const handleWheel = (e) => {
+      const currentZoom = map.getZoom()
+      // Handle both Leaflet events (with originalEvent) and native events
+      const delta = e.originalEvent ? e.originalEvent.deltaY : e.deltaY
+      const event = e.originalEvent || e
+      
+      if (delta < 0 && currentZoom < maxZoom) {
+        // Scroll up = zoom in
+        map.setZoom(Math.min(maxZoom, currentZoom + 1))
+        event.preventDefault()
+      } else if (delta > 0 && currentZoom > minZoom) {
+        // Scroll down = zoom out
+        map.setZoom(Math.max(minZoom, currentZoom - 1))
+        event.preventDefault()
+      } else {
+        event.preventDefault()
+      }
+    }
+    
+    // Enable wheel zoom but handle it manually
+    map.scrollWheelZoom.enable()
+    map.getContainer().addEventListener('wheel', handleWheel, { passive: false })
+    
+    // Enforce current zoom if it's outside limits
+    const currentZoom = map.getZoom()
+    if (currentZoom > maxZoom) {
+      map.setZoom(maxZoom, { animate: false })
+    } else if (currentZoom < minZoom) {
+      map.setZoom(minZoom, { animate: false })
+    }
+
+    // Intercept zoom events as backup
+    const handleZoom = () => {
+      const currentZoom = map.getZoom()
+      if (currentZoom > maxZoom) {
+        map.setZoom(maxZoom, { animate: false })
+      } else if (currentZoom < minZoom) {
+        map.setZoom(minZoom, { animate: false })
+      }
+    }
+
+    map.on('zoom', handleZoom)
+    map.on('zoomend', handleZoom)
+
+    return () => {
+      map.off('zoom', handleZoom)
+      map.off('zoomend', handleZoom)
+      map.getContainer().removeEventListener('wheel', handleWheel)
+    }
+  }, [map, minZoom, maxZoom])
 
   return null
 }
@@ -73,39 +165,52 @@ function HoverHandler({ onHover }) {
 function MapComponent({ layers }) {
   // Get random continent centroid for initial view (generated once per session)
   const [initialView] = useState(() => getRandomContinentCentroid())
+  
+  // Get zoom levels from environment variables
+  const minZoom = parseInt(import.meta.env.VITE_ZOOM_LVL_MIN || '3', 10)
+  const maxZoom = parseInt(import.meta.env.VITE_ZOOM_LVL_MAX || '10', 10)
 
   return (
     <MapContainer
       center={initialView.center}
-      zoom={initialView.zoom}
+      zoom={Math.max(minZoom, Math.min(maxZoom, initialView.zoom))}
       style={{ height: '100%', width: '100%' }}
       zoomControl={false}
       attributionControl={false}
-      minZoom={3}
-      maxZoom={10}
+      minZoom={minZoom}
+      maxZoom={maxZoom}
+      scrollWheelZoom={false}
+      doubleClickZoom={true}
     >
       <BasemapLayer />
+      <ZoomLimiter minZoom={minZoom} maxZoom={maxZoom} />
       <ZoomControl position="topright" />
-      <MapNavigation />
+      <MapNavigation minZoom={minZoom} maxZoom={maxZoom} />
       <HoverHandler />
 
-      {/* KBA PA Layer (blue - Partially and Fully Uncovered KBA of PA) */}
-      {layerConfig.kbaPa.serverUrl && (
-        <MapServerLayer
-          serverUrl={layerConfig.kbaPa.serverUrl}
-          apiKey={layerConfig.kbaPa.apiKey}
-          visible={layers.kba}
-        />
-      )}
-
-      {/* KBA Layer (orange - Key Biodiversity Area) */}
-      {layerConfig.kba.serverUrl && (
-        <MapServerLayer
-          serverUrl={layerConfig.kba.serverUrl}
-          apiKey={layerConfig.kba.apiKey}
-          visible={layers.pa}
-        />
-      )}
+      {/* Render layers in order from .env (first index = TOP, maintains order regardless of check/uncheck) */}
+      {/* Higher zIndex = appears on top, so first index (originalOrder 0) gets highest zIndex */}
+      {orderedLayerConfig.map((layerConfig) => {
+        // Skip if no server URL configured
+        if (!layerConfig.serverUrl) return null
+        
+        // Calculate zIndex based on original order from ALL_LAYERS
+        // First index (originalOrder 0) = TOP layer (highest zIndex)
+        // Get max originalOrder to calculate proper zIndex spacing
+        const maxOrder = Math.max(...orderedLayerConfig.map(l => l.originalOrder || 0))
+        const zIndex = 100 + ((maxOrder - (layerConfig.originalOrder || 0)) * 100)
+        
+        return (
+          <MapServerLayer
+            key={layerConfig.key}
+            serverUrl={layerConfig.serverUrl}
+            apiKey={layerConfig.apiKey}
+            visible={layers[layerConfig.key] !== false} // Default to visible unless explicitly false
+            zIndex={zIndex}
+            maxZoom={maxZoom}
+          />
+        )
+      })}
     </MapContainer>
   )
 }

@@ -3,11 +3,19 @@ import MapComponent from './components/MapComponent'
 import Legend from './components/Legend'
 import './App.css'
 
+import { orderedLayerConfig } from './config/layers'
+
 function App() {
-  const [layers, setLayers] = useState({
-    kba: true, // Partially and Fully Uncovered KBA of PA (blue)
-    pa: true,  // Key Biodiversity Area (KBA) (orange)
+  // Initialize layer visibility state from ordered config
+  // All layers default to visible unless hidden in .env
+  const initialLayers = {}
+  orderedLayerConfig.forEach(layer => {
+    if (!layer.hidden) {
+      initialLayers[layer.key] = true
+    }
   })
+  
+  const [layers, setLayers] = useState(initialLayers)
 
   const toggleLayer = (layerName) => {
     setLayers((prev) => ({

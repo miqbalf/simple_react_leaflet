@@ -2,15 +2,21 @@ import React from 'react'
 import { useMap } from 'react-leaflet'
 import './MapNavigation.css'
 
-function ZoomControls() {
+function ZoomControls({ minZoom, maxZoom }) {
   const map = useMap()
 
   const zoomIn = () => {
-    map.zoomIn()
+    const currentZoom = map.getZoom()
+    if (currentZoom < maxZoom) {
+      map.zoomIn()
+    }
   }
 
   const zoomOut = () => {
-    map.zoomOut()
+    const currentZoom = map.getZoom()
+    if (currentZoom > minZoom) {
+      map.zoomOut()
+    }
   }
 
   return (
@@ -29,11 +35,11 @@ function ZoomControls() {
   )
 }
 
-function MapNavigation() {
+function MapNavigation({ minZoom, maxZoom }) {
   return (
     <div className="map-nav-container">
       <div className="map-nav-content">
-        <ZoomControls />
+        <ZoomControls minZoom={minZoom} maxZoom={maxZoom} />
         <div className="map-help-container">
           <div className="map-help-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

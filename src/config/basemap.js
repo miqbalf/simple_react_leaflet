@@ -3,8 +3,9 @@
 // For Vite, use VITE_ prefix
 
 const basemapConfig = {
-  // ArcGIS Server URL (can be full MapServer URL or base server URL)
+  // ArcGIS Server URL (can be full MapServer/VectorTileServer URL or base server URL)
   // Example (full MapServer): 'https://wesrmapportal.unep.org/arcgis/rest/services/Hosted/World_regions_tile/MapServer/'
+  // Example (full VectorTileServer): 'https://basemaps.arcgis.com/arcgis/rest/services/World_Basemap_v2/VectorTileServer/'
   // Example (base server): 'https://services.arcgisonline.com/ArcGIS/rest/services'
   serverUrl: import.meta.env.VITE_BASEMAP_SERVER_URL || import.meta.env.VITE_ARCGIS_SERVER_URL || 'https://services.arcgisonline.com/ArcGIS/rest/services',
   
@@ -15,7 +16,12 @@ const basemapConfig = {
   // REST is the most common and reliable for ArcGIS servers
   type: import.meta.env.VITE_BASEMAP_TYPE || 'REST',
   
-  // Layer name (only used if serverUrl is base server, not full MapServer URL)
+  // Service type: 'MapServer' (default) or 'VectorTileServer'
+  // Only used if serverUrl is a base server URL (not a full service URL)
+  // If serverUrl already contains '/VectorTileServer' or '/MapServer', this is ignored
+  serviceType: import.meta.env.VITE_BASEMAP_SERVICE_TYPE || 'MapServer',
+  
+  // Layer name (only used if serverUrl is base server, not full service URL)
   // Examples: 'World_Imagery', 'World_Topo_Map', 'World_Street_Map', 'World_Physical_Map'
   // Or your custom layer name
   layer: import.meta.env.VITE_BASEMAP_LAYER || 'World_Imagery',
