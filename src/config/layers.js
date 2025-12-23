@@ -5,14 +5,14 @@
 const layerDefinitions = {
   VITE_KBA_PA_SERVER_URL: {
     key: 'kbaPa',
-    label: 'Partially and Fully Uncovered KBA of PA',
+    label: 'KBAs with incomplete protected area coverage',
     color: '#005CAF', // Blue
     envVar: 'VITE_KBA_PA_SERVER_URL'
   },
   VITE_PA_SERVER_URL: {
     key: 'pa',
     label: 'Protected Area (PA)',
-    color: '#C6E2B2', // Green
+    color: '#8CC970', // Green
     envVar: 'VITE_PA_SERVER_URL'
   },
   VITE_KBA_SERVER_URL: {
