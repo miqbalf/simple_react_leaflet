@@ -38,20 +38,29 @@ function MapServerLayer({ serverUrl, apiKey, visible, zIndex, maxZoom }) {
       baseUrl = baseUrl.slice(0, -1)
     }
 
-    // Build tile URL: {MapServer}/tile/{z}/{y}/{x} (same format as basemap)
-    const tileUrl = `${baseUrl}/tile/{z}/{y}/{x}`
-    
-    // Build API key parameter if provided
-    const apiKeyParam = apiKey ? `?token=${apiKey}` : ''
-    
-    // Create tile layer (same approach as BasemapLayer)
-    // zIndex: higher order = higher zIndex (appears on top)
-    // First layer (order 0) should be at bottom, last layer should be on top
-    const layer = L.tileLayer(`${tileUrl}${apiKeyParam}`, {
+    // Build tile layer options
+    let tileOptions = {
       attribution: '',
       maxZoom: maxZoom || 19, // Use configured maxZoom or default to 19
       zIndex: zIndex || 100, // Default zIndex, higher = on top
-    })
+    }
+    
+    // Check if this is the protected_area_new_tile_rev service (EPSG:4326)
+    // This service may need special handling for projection
+    const isProtectedAreaService = baseUrl.includes('protected_area_new_tile_rev')
+    
+    let tileUrl
+    if (isProtectedAreaService) {
+      // For EPSG:4326 services, try requesting tiles with Web Mercator output
+      // ArcGIS should handle the projection conversion server-side
+      const apiKeyParam = apiKey ? `&token=${apiKey}` : ''
+      tileUrl = `${baseUrl}/tile/{z}/{y}/{x}?f=image&format=png&transparent=true${apiKeyParam}`
+    } else {
+      // Standard ArcGIS REST tile format (same as BasemapLayer)
+      tileUrl = `${baseUrl}/tile/{z}/{y}/{x}${apiKey ? `?token=${apiKey}` : ''}`
+    }
+    
+    const layer = L.tileLayer(tileUrl, tileOptions)
 
     layer.addTo(map)
 
