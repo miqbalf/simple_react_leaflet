@@ -5,20 +5,21 @@
 const layerDefinitions = {
   VITE_KBA_PA_SERVER_URL: {
     key: 'kbaPa',
-    label: 'KBAs with incomplete protected area coverage',
-    color: '#005CAF', // Blue
+    label: 'Key Biodiversity Areas (KBA) with incomplete protected area coverage',
+    color: '#005CAF',
     envVar: 'VITE_KBA_PA_SERVER_URL'
   },
   VITE_PA_SERVER_URL: {
     key: 'pa',
     label: 'Protected Area (PA)',
-    color: '#8CC970', // Green
+    // color: '#8CC970', 
+    color: '#FFA000',
     envVar: 'VITE_PA_SERVER_URL'
   },
   VITE_KBA_SERVER_URL: {
     key: 'kba',
     label: 'Key Biodiversity Area (KBA)',
-    color: '#FFA000', // Orange
+    color: '#FFA000', 
     envVar: 'VITE_KBA_SERVER_URL'
   }
 }
